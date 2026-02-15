@@ -1,0 +1,55 @@
+---
+- name: Labo 02 - Bootstrap Rocky
+  hosts: rocky1
+  become: yes
+  gather_facts: no
+
+  vars:
+    hostname: "merlin"
+
+  tasks:
+    - name: Install dnf plugin for repo management
+      ansible.builtin.dnf:
+        name: dnf-plugins-core
+        state: present
+
+    - name: Add Docker CE repository
+      ansible.builtin.get_url:
+        url: "https://download.docker.com/linux/centos/docker-ce.repo"
+        dest: "/etc/yum.repos.d/docker-ce.repo"
+        mode: "0644"
+
+    - name: Install Docker Engine
+      ansible.builtin.dnf:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+
+    - name: Ensure Docker is started and enabled
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install nmap and mc
+      ansible.builtin.dnf:
+        name:
+          - nmap
+          - mc
+        state: present
+
+    - name: Set SELinux to permissive (runtime + persistent)
+      ansible.posix.selinux:
+        state: permissive
+        policy: targeted
+
+    - name: Set hostname (mythological/magical name)
+      ansible.builtin.hostname:
+        name: "{{ hostname }}"
+
+    - name: Ensure /root/test.txt exists and is empty
+      ansible.builtin.copy:
+        dest: /root/test.txt
+        content: ""
