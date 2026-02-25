@@ -1,6 +1,6 @@
 ---
 - name: Labo 02 - Bootstrap Rocky
-  hosts: rocky1
+  hosts: linux
   become: yes
   gather_facts: no
 
@@ -26,6 +26,7 @@
           - docker-ce-cli
           - containerd.io
         state: present
+        update_cache: true
 
     - name: Ensure Docker is started and enabled
       ansible.builtin.service:
