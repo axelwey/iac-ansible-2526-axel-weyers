@@ -54,3 +54,90 @@
       ansible.builtin.copy:
         dest: /root/test.txt
         content: ""
+
+    - name: Create group baasjes
+      ansible.builtin.group:
+        name: baasjes
+        state: present
+
+    - name: Create user kim with bash and group baasjes
+      ansible.builtin.user: 
+        name: kim
+        comment: "Kim De Hert"
+        shell: /bin/bash
+        groups: baasjes
+        append: yes
+        state: present
+
+    - name: Ensure 127.0.0.1 entry exists in /etc/hosts
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^127\.0\.0\.1\s+mijndommelinux$'
+        line: '127.0.0.1 mijndommelinux'
+        state: present
+
+    - name: Ensure 6.6.6.6 entry exists in /etc/hosts
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^6\.6\.6\.6\s+www\.google\.com$'
+        line: '6.6.6.6 www.google.com'
+        state: present
+
+    - name: Enable EPEL repository (for htop)
+      ansible.builtin.dnf:
+        name: epel-release
+        state: present
+        update_cache: true
+
+    - name: Install extra packages (bind-utils, traceroute, htop)
+      ansible.builtin.dnf:
+        name:
+          - bind-utils
+          - traceroute
+          - htop
+        state: present
+        update_cache: true
+
+    - name: Create /home/secret directory with least privilege
+      ansible.builtin.file:
+        path: /home/secret
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Copy secret.txt to managed node with strict permissions
+      ansible.builtin.copy:
+        src: files/secret.txt
+        dest: /home/secret/secret.txt
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Create /etc backup archive on managed node 
+      community.general.archive:
+        path: /etc
+        dest: "/tmp/etc-backup-{{ hostname }}.tar.gz"
+        format: gz
+
+    - name: Ensure local artifacts folder exists on control node
+      ansible.builtin.file:
+        path: "./artifacts/{{ hostname }}/"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      become: false
+      run_once: true
+
+    - name: Fetch backup archive from managed node to control node 
+      ansible.builtin.fetch:
+        src: "/tmp/etc-backup-{{ hostname }}.tar.gz"
+        dest: "./artifacts/{{ hostname }}/etc-backup-{{ hostname }}.tar.gz"
+        flat: yes
+
+    - name: Controlled reboot and wait until back online
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+        test_command: "whoami"
+        
+
