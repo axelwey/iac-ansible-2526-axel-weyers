@@ -10,9 +10,14 @@ ansible-galaxy collection install -r requirements.yml
 ```bash
 ansible linux -m ansible.builtin.ping
 ```
-## Run labo 2 bootstrap
+## Run bootstrap
 ```bash
 ansible-playbook playbook/labo02_bootstrap_rocky.yml
 ```
-
+## Notes
+Playbooks assume SSH key-based authentication
+secret.txt must exist in:
+```bash
+playbooks/files/secret.txt
+```
 
