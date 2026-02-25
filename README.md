@@ -16,6 +16,7 @@ ansible-playbook playbook/labo02_bootstrap_rocky.yml
 ```
 ## Notes
 Playbooks assume SSH key-based authentication
+
 secret.txt must exist in:
 ```bash
 playbooks/files/secret.txt
