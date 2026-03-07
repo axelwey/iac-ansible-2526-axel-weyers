@@ -1,0 +1,66 @@
+---
+service_host_baseline:
+  administrator: "Axel Weyers"
+  common_packages:
+    - tmux
+    - vim
+    - rsync
+  distro_packages:
+    RedHat:
+      - psmisc
+      - bind-utils
+    Debian:
+      - psmisc
+      - dnsutils
+  users:
+    bob:
+      name: "bob"
+      comment: "Infrastructuur Beheerder"
+      groups:
+        RedHat: "wheel"
+        Debian: "sudo"
+      ssh_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOM28A766F9JkQk4vFpS5D8v5D8v5D8v5D8v5D8v5D8v bob@labo"
+    alice:
+      name: "alice"
+      comment: "Security Auditor"
+      groups:
+        RedHat: "wheel"
+        Debian: "sudo"
+      ssh_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOM28A766F9JkQk4vFpS5D8v5D8v5D8v5D8v5D8v5D8v alice@labo"
+  database:
+    mapping:
+      RedHat:
+        server_pkg: "mariadb-server"
+        python_pkg: "python3-PyMySQL"
+        service_name: "mariadb"
+        socket: "/var/lib/mysql/mysql.sock"
+      Debian:
+        server_pkg: "mariadb-server"
+        python_pkg: "python3-mysqldb"
+        service_name: "mariadb"
+        socket: "/run/mysqld/mysqld.sock"
+    db_name: "labdb"
+    db_user: "labuser"
+    db_pass_path: "../secrets/appdb.pass"
+  report:
+    commands:
+      RedHat: "dnf history | head -n 20"
+      Debian: "lastcomm --command apt | head -n 20"
+    dest: "/root/build_report.txt"
+  backup:
+    sources:
+      - "/etc/ssh/sshd_config"
+      - "/etc/hosts"
+    dest_prefix: "../artifacts"
+  banner:
+    message: |
+      **********************************************************
+      * UNAUTHORIZED ACCESS TO THIS SYSTEM IS PROHIBITED      *
+      * This system is managed by {{ service_host_baseline.administrator }}      *
+      * All activities are logged and monitored.              *
+      **********************************************************
+    paths:
+      - "/etc/issue"
+      - "/etc/issue.net"
+
+

@@ -1,0 +1,127 @@
+---
+- name: "Labo 4: Service Host Baseline"
+  hosts: linux
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: "Laad groeps-variabelen in"
+      ansible.builtin.include_vars:
+        file: "../group_vars/linux.yml"
+    
+    - name: "Laad host-specifieke variabelen in"
+      ansible.builtin.include_vars:
+        file: "../host_vars/{{ inventory_hostname }}.yml"
+
+  tasks:
+    - name: "A. Hostname - Instellen van de systeem hostname"
+      ansible.builtin.hostname:
+        name: "{{ service_host_baseline.hostname }}"
+
+    - name: "B. Packages - Installeren van gecombineerde pakketlijst"
+      ansible.builtin.package:
+        name: "{{ service_host_baseline.common_packages + service_host_baseline.distro_packages[ansible_facts['os_family']] }}"
+        state: present
+    - name: "C1. Users - Aanmaken van user Bob"
+      ansible.builtin.user:
+        name: "{{ service_host_baseline.users.bob.name }}"
+        comment: "{{ service_host_baseline.users.bob.comment }}"
+        groups: "{{ service_host_baseline.users.bob.groups[ansible_facts['os_family']] }}"
+        append: true
+        state: present
+
+    - name: "C1. SSH Key - Toevoegen voor Bob"
+      ansible.builtin.authorized_key:
+        user: "{{ service_host_baseline.users.bob.name }}"
+        key: "{{ service_host_baseline.users.bob.ssh_key }}"
+        state: present
+
+    - name: "C2. Users - Aanmaken van user Alice"
+      ansible.builtin.user:
+        name: "{{ service_host_baseline.users.alice.name }}"
+        comment: "{{ service_host_baseline.users.alice.comment }}"
+        groups: "{{ service_host_baseline.users.alice.groups[ansible_facts['os_family']] }}"
+        append: true
+        state: present
+
+    - name: "C2. SSH Key - Toevoegen voor Alice"
+      ansible.builtin.authorized_key:
+        user: "{{ service_host_baseline.users.alice.name }}"
+        key: "{{ service_host_baseline.users.alice.ssh_key }}"
+        state: present
+    - name: "D1. MariaDB - Installeren van de server packages"
+      ansible.builtin.package:
+        name: "{{ service_host_baseline.database.mapping[ansible_facts['os_family']].server_pkg }}"
+        state: present
+
+    - name: "D2. MariaDB - Installeren van de Python drivers"
+      ansible.builtin.package:
+        name: "{{ service_host_baseline.database.mapping[ansible_facts['os_family']].python_pkg }}"
+        state: present
+
+    - name: "D3. MariaDB - Zorg dat de service draait"
+      ansible.builtin.service:
+        name: "{{ service_host_baseline.database.mapping[ansible_facts['os_family']].service_name }}"
+        state: started
+        enabled: true
+
+    - name: "D4. MariaDB - Aanmaken van de database"
+      community.mysql.mysql_db:
+        name: "{{ service_host_baseline.database.db_name }}"
+        state: present
+        login_unix_socket: "{{ service_host_baseline.database.mapping[ansible_facts['os_family']].socket }}"
+
+    - name: "D5. MariaDB - Aanmaken van de database user"
+      community.mysql.mysql_user:
+        name: "{{ service_host_baseline.database.db_user }}"
+        password: "{{ lookup('ansible.builtin.file', service_host_baseline.database.db_pass_path) }}"
+        priv: "{{ service_host_baseline.database.db_name }}.*:ALL"
+        state: present
+        login_unix_socket: "{{ service_host_baseline.database.mapping[ansible_facts['os_family']].socket }}"
+    - name: "E1. Register - Ophalen van package geschiedenis"
+      ansible.builtin.shell:
+        cmd: "{{ service_host_baseline.report.commands[ansible_facts['os_family']] }}"
+      register: package_history
+      changed_when: false
+
+    - name: "E2. Register - Schrijven van Build Report naar /root"
+      ansible.builtin.copy:
+        dest: "{{ service_host_baseline.report.dest }}"
+        owner: root
+        group: root
+        mode: '0600'
+        content: |
+          BUILD REPORT
+          Administrator: {{ service_host_baseline.administrator }}
+          Hostname: {{ service_host_baseline.hostname }}
+          OS Family: {{ ansible_facts['os_family'] }}
+          ---
+          PACKAGE HISTORY:
+          {{ package_history.stdout }}
+    - name: "F1. Backup - Ophalen van bestand 1 (SSH Config)"
+      ansible.builtin.fetch:
+        src: "{{ service_host_baseline.backup.sources[0] }}"
+        dest: "{{ service_host_baseline.backup.dest_prefix }}/{{ inventory_hostname }}/"
+        flat: yes
+
+    - name: "F2. Backup - Ophalen van bestand 2 (Hosts file)"
+      ansible.builtin.fetch:
+        src: "{{ service_host_baseline.backup.sources[1] }}"
+        dest: "{{ service_host_baseline.backup.dest_prefix }}/{{ inventory_hostname }}/"
+        flat: yes
+    - name: "G1. Banner - Instellen van de lokale console banner (/etc/issue)"
+      ansible.builtin.copy:
+        dest: "{{ service_host_baseline.banner.paths[0] }}"
+        content: "{{ service_host_baseline.banner.message }}"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: "G2. Banner - Instellen van de SSH banner (/etc/issue.net)"
+      ansible.builtin.copy:
+        dest: "{{ service_host_baseline.banner.paths[1] }}"
+        content: "{{ service_host_baseline.banner.message }}"
+        owner: root
+        group: root
+        mode: '0644'
+

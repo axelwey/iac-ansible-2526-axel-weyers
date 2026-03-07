@@ -1,0 +1,4 @@
+---
+service_host_baseline:
+  hostname: "svc-rocky1"
+
