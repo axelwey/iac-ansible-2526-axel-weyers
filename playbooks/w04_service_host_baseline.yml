@@ -124,4 +124,9 @@
         owner: root
         group: root
         mode: '0644'
+    - name: "F3. Backup - Ophalen van het Build Report"
+      ansible.builtin.fetch:
+        src: "{{ service_host_baseline.report.dest }}"
+        dest: "{{ service_host_baseline.backup.dest_prefix }}/{{ inventory_hostname }}/"
+        flat: yes
 

@@ -1,0 +1,17 @@
+BUILD REPORT
+Administrator: Axel Weyers
+Hostname: svc-rocky1
+OS Family: RedHat
+---
+PACKAGE HISTORY:
+ID     | Command line             | Date and time    | Action(s)      | Altered
+-------------------------------------------------------------------------------
+     9 |                          | 2026-03-07 14:29 | Install        |    1   
+     8 |                          | 2026-03-07 14:24 | Install        |   25 EE
+     7 |                          | 2026-03-07 13:47 | Install        |    6   
+     6 |                          | 2026-02-25 19:53 | Install        |   11  <
+     5 |                          | 2026-02-25 19:53 | Install        |    1 >E
+     4 |                          | 2026-02-15 13:36 | Install        |   63   
+     3 |                          | 2026-02-15 13:35 | Install        |   11  <
+     2 | install -y open-vm-tools | 2026-02-04 18:30 | Install        |   13 ><
+     1 |                          | 2026-02-04 18:17 | Install        |  328 >E

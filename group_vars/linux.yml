@@ -45,7 +45,7 @@ service_host_baseline:
   report:
     commands:
       RedHat: "dnf history | head -n 20"
-      Debian: "lastcomm --command apt | head -n 20"
+      Debian: "grep ' install ' /var/log/dpkg.log | tail -n 20"
     dest: "/root/build_report.txt"
   backup:
     sources:

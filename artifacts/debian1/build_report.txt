@@ -1,0 +1,26 @@
+BUILD REPORT
+Administrator: Axel Weyers
+Hostname: svc-debian1
+OS Family: Debian
+---
+PACKAGE HISTORY:
+2026-03-07 14:24:10 install mariadb-client:amd64 <none> 1:10.11.14-0+deb12u2
+2026-03-07 14:24:11 install liburing2:amd64 <none> 2.3-3
+2026-03-07 14:24:11 install mariadb-server-core:amd64 <none> 1:10.11.14-0+deb12u2
+2026-03-07 14:24:13 install socat:amd64 <none> 1.7.4.4-2
+2026-03-07 14:24:13 install mariadb-server:amd64 <none> 1:10.11.14-0+deb12u2
+2026-03-07 14:24:14 install libcgi-pm-perl:all <none> 4.55-1
+2026-03-07 14:24:14 install libfcgi0ldbl:amd64 <none> 2.4.2-2+deb12u1
+2026-03-07 14:24:14 install libfcgi-perl:amd64 <none> 0.82+ds-2
+2026-03-07 14:24:14 install libcgi-fast-perl:all <none> 1:2.15-1
+2026-03-07 14:24:15 install libdbd-mariadb-perl:amd64 <none> 1.22-1+b1
+2026-03-07 14:24:15 install libfcgi-bin:amd64 <none> 2.4.2-2+deb12u1
+2026-03-07 14:24:15 install libhtml-template-perl:all <none> 2.97-2
+2026-03-07 14:24:15 install libterm-readkey-perl:amd64 <none> 2.38-2+b1
+2026-03-07 14:24:15 install mariadb-plugin-provider-bzip2:amd64 <none> 1:10.11.14-0+deb12u2
+2026-03-07 14:24:15 install mariadb-plugin-provider-lz4:amd64 <none> 1:10.11.14-0+deb12u2
+2026-03-07 14:24:15 install mariadb-plugin-provider-lzma:amd64 <none> 1:10.11.14-0+deb12u2
+2026-03-07 14:24:15 install mariadb-plugin-provider-lzo:amd64 <none> 1:10.11.14-0+deb12u2
+2026-03-07 14:24:15 install mariadb-plugin-provider-snappy:amd64 <none> 1:10.11.14-0+deb12u2
+2026-03-07 14:24:15 install pv:amd64 <none> 1.6.20-1
+2026-03-07 14:24:32 install python3-mysqldb:amd64 <none> 1.4.6-2+b1
