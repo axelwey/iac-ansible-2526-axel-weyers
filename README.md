@@ -7,21 +7,14 @@ Install Ansible Collections:
 ansible-galaxy collection install -r requirements.yml
 ```
 
-## Secrets herstellen
-Maak een map secrets/ aan en voeg de volgende bestanden toe:
-
-secrets/become.pass (sudo wachtwoord)
-secrets/appdb.pass (database wachtwoord)
-
-## Connectivity Test
-```bash
-ansible linux -m ansible.builtin.ping
-```
 ## Run bootstrap
 ```bash
-ansible-playbook playbook/w04_service_host_baseline.yml
+ansible-playbook playbook/labo5_baseline_v2.yml
 ```
 ## Notes
 Playbooks assume SSH key-based authentication
 
+## Motivatie loop/when
+**loop** wordt gebruikt voor packages, users en sercices omdat de data in lijsten staat (list-of-dicts in `group_vars`). één generieke taks loopt over de volledige lijst.
+**when** wordt enkel gebruikt waar het functioneel noodzakelijk is: om items te filteren op `os_family` of `group`. Zonder `when` zou elk item op elke host worden uitgevoerd, wat fout is. De conditionals staan in de data. 
 

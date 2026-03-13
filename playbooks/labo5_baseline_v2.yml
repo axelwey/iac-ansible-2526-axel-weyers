@@ -1,0 +1,153 @@
+---
+- name: "Labo 5 – Access & Operations Baseline v2"
+  hosts: linux
+  become: true
+  gather_facts: true
+
+  tasks:
+
+
+    - name: "A | Refresh package cache (RedHat)"
+      ansible.builtin.dnf:
+        update_cache: true
+      register: _cache_rh
+      until: _cache_rh is not failed
+      retries: 3
+      delay: 5
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: "A | Refresh package cache (Debian)"
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      register: _cache_deb
+      until: _cache_deb is not failed
+      retries: 3
+      delay: 5
+      when: ansible_facts['os_family'] == "Debian"
+
+
+    - name: "B | Installeer EPEL op RedHat (prerequisite voor fail2ban)"
+      ansible.builtin.dnf:
+        name: epel-release
+        state: present
+      when: ansible_facts['os_family'] == "RedHat"
+
+
+    - name: "B | Installeer packages"
+      ansible.builtin.package:
+        name: "{{ pkg.name }}"
+        state: present
+      loop: "{{ ops_baseline['packages'] + (ops_host_extra['packages'] | default([])) }}"
+      loop_control:
+        loop_var: pkg
+        label: "{{ pkg.name }}"
+      when:
+        - pkg.enabled | default(true)
+        - pkg.os_family is not defined or pkg.os_family == ansible_facts['os_family']
+        - pkg.group is not defined or pkg.group in group_names
+
+
+    - name: "C | Bepaal admin-groep op basis van OS"
+      ansible.builtin.set_fact:
+        _admin_group: "{{ admin_group_map[ansible_facts['os_family']] }}"
+
+    - name: "C | Maak users aan"
+      ansible.builtin.user:
+        name: "{{ usr.name }}"
+        state: present
+        groups: "{{ _admin_group if usr.admin else '' }}"
+        append: true
+        shell: /bin/bash
+        create_home: true
+      loop: "{{ ops_baseline['users'] }}"
+      loop_control:
+        loop_var: usr
+        label: "{{ usr.name }}"
+      when: usr.host_group == "all" or usr.host_group in group_names
+
+    - name: "C | SSH authorized_key instellen"
+      ansible.posix.authorized_key:
+        user: "{{ usr.name }}"
+        state: present
+        key: "{{ usr.ssh_key }}"
+      loop: "{{ ops_baseline['users'] }}"
+      loop_control:
+        loop_var: usr
+        label: "{{ usr.name }}"
+      when: usr.host_group == "all" or usr.host_group in group_names
+
+
+    - name: "D | Beheer services"
+      ansible.builtin.service:
+        name: "{{ svc.name_redhat if ansible_facts['os_family'] == 'RedHat' else svc.name_debian }}"
+        state: "{{ svc.state }}"
+        enabled: "{{ svc.enabled }}"
+      loop: "{{ ops_baseline['services'] }}"
+      loop_control:
+        loop_var: svc
+        label: "{{ svc.name_redhat }}/{{ svc.name_debian }}"
+
+
+    - name: "E | SSH-config guardrail"
+      block:
+
+        - name: "E | Backup SSH-config"
+          ansible.builtin.copy:
+            src: "{{ ops_baseline['guardrails']['ssh_config'] }}"
+            dest: "{{ ops_baseline['guardrails']['ssh_backup'] }}"
+            remote_src: true
+            mode: "0600"
+
+        - name: "E | PasswordAuthentication no"
+          ansible.builtin.lineinfile:
+            path: "{{ ops_baseline['guardrails']['ssh_config'] }}"
+            regexp: '^#?PasswordAuthentication'
+            line: 'PasswordAuthentication no'
+            state: present
+            backup: false
+
+        - name: "E | PermitRootLogin no"
+          ansible.builtin.lineinfile:
+            path: "{{ ops_baseline['guardrails']['ssh_config'] }}"
+            regexp: '^#?PermitRootLogin'
+            line: 'PermitRootLogin no'
+            state: present
+            backup: false
+
+        - name: "E | Valideer SSH-config"
+          ansible.builtin.command:
+            cmd: "sshd -t -f {{ ops_baseline['guardrails']['ssh_config'] }}"
+          changed_when: false
+          register: _ssh_validate
+
+        - name: "E | Herstart SSH (enkel als config geldig is)"
+          ansible.builtin.service:
+            name: "{{ 'sshd' if ansible_facts['os_family'] == 'RedHat' else 'ssh' }}"
+            state: restarted
+          when: _ssh_validate.rc == 0
+
+      rescue:
+
+        - name: "E | RESCUE – herstel SSH-config vanuit backup"
+          ansible.builtin.copy:
+            src: "{{ ops_baseline['guardrails']['ssh_backup'] }}"
+            dest: "{{ ops_baseline['guardrails']['ssh_config'] }}"
+            remote_src: true
+            mode: "0600"
+
+        - name: "E | RESCUE – log foutmelding"
+          ansible.builtin.lineinfile:
+            path: "{{ ops_baseline['guardrails']['ssh_marker'] }}"
+            line: "RESCUE uitgevoerd op {{ ansible_facts['date_time']['iso8601'] }} – SSH-config hersteld"
+            create: true
+            mode: "0644"
+
+      always:
+
+        - name: "E | ALWAYS – schrijf marker/logbestand"
+          ansible.builtin.lineinfile:
+            path: "{{ ops_baseline['guardrails']['ssh_marker'] }}"
+            line: "Guardrail uitgevoerd op {{ ansible_facts['date_time']['iso8601'] }} – host: {{ inventory_hostname }}"
+            create: true
+            mode: "0644"
