@@ -1,0 +1,4 @@
+---
+nginx_listen_port: 8080
+nginx_server_name: blue.lab.local
+nginx_variant: web_blue

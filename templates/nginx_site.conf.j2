@@ -1,0 +1,14 @@
+server {
+    listen {{ nginx_listen_port }};
+    server_name {{ nginx_server_name }};
+
+    location / {
+        default_type text/plain;
+        return 200 "Managed by Ansible
+host={{ inventory_hostname }}
+variant={{ nginx_variant }}
+server_name={{ nginx_server_name }}
+port={{ nginx_listen_port }}
+";
+    }
+}

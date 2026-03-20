@@ -1,0 +1,46 @@
+---
+- name: Labo 6 - Nginx configureren met template en handler
+  hosts: linux
+  become: true
+
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+
+  tasks:
+    - name: Installeer nginx (RedHat)
+      ansible.builtin.package:
+        name: nginx
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Installeer nginx (Debian)
+      ansible.builtin.package:
+        name: nginx
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Zorg dat nginx actief en enabled is
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Deploy nginx site config via template
+      ansible.builtin.template:
+        src: ../templates/nginx_site.conf.j2
+        dest: /etc/nginx/conf.d/labo6.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart nginx
+
+    - name: Open firewall poort voor nginx (RedHat/firewalld)
+      ansible.posix.firewalld:
+        port: "{{ nginx_listen_port }}/tcp"
+        permanent: true
+        state: enabled
+        immediate: true
+      when: ansible_os_family == "RedHat"

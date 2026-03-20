@@ -1,0 +1,4 @@
+---
+nginx_listen_port: 8081
+nginx_server_name: green.lab.local
+nginx_variant: web_green
