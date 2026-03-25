@@ -1,0 +1,20 @@
+---
+- name: Installeer nginx
+  ansible.builtin.package:
+    name: nginx
+    state: present
+
+- name: Zorg dat nginx enabled en gestart is
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Deploy nginx vhost config via template
+  ansible.builtin.template:
+    src: nginx_vhost.conf.j2
+    dest: /etc/nginx/conf.d/{{ nginx_vhost_filename }}
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx

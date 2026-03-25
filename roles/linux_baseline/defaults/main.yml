@@ -1,0 +1,19 @@
+---
+# Defaults – worden overschreven door group_vars/host_vars
+ops_admin_user: ops_admin
+ops_admin_shell: /bin/bash
+ops_admin_ssh_public_key: ""
+
+emergency_admin_user: emergency_admin
+emergency_admin_password_hash: "!"   # Locked account als fallback; stel in via vault
+
+common_packages:
+  - git
+  - curl
+  - rsync
+
+debian_extra_packages:
+  - network-manager
+
+motd_message: |
+  Managed by Ansible.

@@ -1,0 +1,15 @@
+---
+- name: Labo 07 – Linux role library + Vault
+  hosts: linux
+  become: true
+  gather_facts: false
+
+  pre_tasks:
+    - name: Gather facts met sudo
+      ansible.builtin.setup:
+      become: true
+
+  roles:
+    - role: linux_baseline
+    - role: nginx
+    - role: ssh_hardening

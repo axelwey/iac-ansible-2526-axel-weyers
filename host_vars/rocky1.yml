@@ -1,4 +1,0 @@
----
-ops_host_extra:
-  packages:
-    - { name: "nfs-utils", enabled: true }

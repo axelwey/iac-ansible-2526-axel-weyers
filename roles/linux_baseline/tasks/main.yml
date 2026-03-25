@@ -1,0 +1,56 @@
+---
+- name: OS update – RedHat/Rocky
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    update_cache: true
+  when: ansible_os_family == "RedHat"
+
+- name: OS update – Debian
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+  when: ansible_os_family == "Debian"
+
+- name: Installeer common packages
+  ansible.builtin.package:
+    name: "{{ common_packages }}"
+    state: present
+
+- name: Installeer Debian-specifieke packages
+  ansible.builtin.apt:
+    name: "{{ debian_extra_packages }}"
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Maak user ops_admin aan
+  ansible.builtin.user:
+    name: "{{ ops_admin_user }}"
+    shell: "{{ ops_admin_shell }}"
+    groups: "{{ 'wheel' if ansible_os_family == 'RedHat' else 'sudo' }}"
+    append: true
+    state: present
+    create_home: true
+
+- name: Voeg SSH public key toe voor ops_admin
+  ansible.posix.authorized_key:
+    user: "{{ ops_admin_user }}"
+    state: present
+    key: "{{ ops_admin_ssh_public_key }}"
+
+- name: Maak user emergency_admin aan (wachtwoord via Vault)
+  ansible.builtin.user:
+    name: "{{ emergency_admin_user }}"
+    shell: /bin/bash
+    password: "{{ emergency_admin_password_hash }}"
+    state: present
+    create_home: true
+  no_log: true
+
+- name: Deploy MOTD via template
+  ansible.builtin.template:
+    src: motd.j2
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: "0644"

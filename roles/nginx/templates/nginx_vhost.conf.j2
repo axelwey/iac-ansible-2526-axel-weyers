@@ -1,0 +1,13 @@
+# Beheerd door Ansible – niet manueel aanpassen
+server {
+    listen      {{ nginx_listen_port }};
+    server_name {{ nginx_server_name }};
+
+    access_log /var/log/nginx/{{ nginx_server_name }}_access.log;
+    error_log  /var/log/nginx/{{ nginx_server_name }}_error.log;
+
+    location / {
+        root  {{ nginx_webroot }};
+        index index.html index.htm;
+    }
+}

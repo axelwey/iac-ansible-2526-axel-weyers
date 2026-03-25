@@ -55,3 +55,39 @@ ops_baseline:
 admin_group_map:
   RedHat: wheel
   Debian: sudo
+# --- Common packages ---
+common_packages:
+  - git
+  - curl
+  - rsync
+
+debian_extra_packages:
+  - network-manager
+
+# --- User: ops_admin ---
+ops_admin_user: ops_admin
+ops_admin_shell: /bin/bash
+# Vervang dit door de output van: cat ~/.ssh/id_ed25519_iac.pub
+ops_admin_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... axel@axel-VMware"
+
+# --- User: emergency_admin ---
+emergency_admin_user: emergency_admin
+# Plak hier de volledige output van stap 4 (ansible-vault encrypt_string ...)
+emergency_admin_password_hash: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          65383263376334303434636463363035356333366366633463306533383339313230656561306637
+          6539303066313561346165646162303866393834306533350a613561656337636361346166386336
+          32633062356639393764343331396233353061356431656362653334653430633663323632633261
+          6663663165313865610a376436643261326631376166306166653263336664353737313265313236
+          62623238363065326335373930336530333535303835356134636335366632336266383739636262
+          64613035623938623265346233326262656662306233643035303932643565323934663662373631
+          38333964326164643462653761616138333265653362346230353933343263343736376332343834
+          35373966326532623430363938643335633762623632643832363437613236613062656339653736
+          31623137646437656436343264343163303833656263303835663732386664643765
+
+# --- MOTD ---
+motd_message: |
+  ############################################################
+  #  Host: managed by Ansible                                #
+  #  Unauthorized access is strictly prohibited             #
+  ############################################################
