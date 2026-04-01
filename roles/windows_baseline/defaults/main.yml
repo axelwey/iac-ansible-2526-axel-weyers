@@ -1,0 +1,28 @@
+---
+choco_packages:
+  - name: 7zip
+    state: present
+  - name: notepadplusplus
+    state: present
+  - name: git
+    state: present
+  - name: putty
+    state: present
+  - name: sysinternals
+    state: present
+  - name: curl
+    state: present
+  - name: grep
+    state: present
+  - name: vlc
+    state: present
+
+choco_features:
+  - name: checksumFiles
+    state: enabled
+  - name: useRememberedArgumentsForUpgrades
+    state: enabled
+
+choco_config:
+  - name: commandExecutionTimeoutSeconds
+    value: "14400"

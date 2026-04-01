@@ -1,0 +1,18 @@
+---
+- name: Install Chocolatey packages
+  chocolatey.chocolatey.win_chocolatey:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+  loop: "{{ choco_packages }}"
+
+- name: Configure Chocolatey features
+  chocolatey.chocolatey.win_chocolatey_feature:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+  loop: "{{ choco_features }}"
+
+- name: Configure Chocolatey settings
+  chocolatey.chocolatey.win_chocolatey_config:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+  loop: "{{ choco_config }}"

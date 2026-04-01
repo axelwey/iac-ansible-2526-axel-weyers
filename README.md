@@ -1,51 +1,50 @@
-# Infrastructure as Code – Labo 07
+# iac-ansible-2526-axel-weyers
 
-## Beschrijving
-Mini Linux role library voor Rocky en Debian via Ansible roles + Vault.
+## Labo 08 — Windows baseline met Ansible, SSH en Chocolatey
 
-## Inventory groups
+### Projectstructuur
 
-| Groep       | Hosts           | Doel                          |
-|-------------|-----------------|-------------------------------|
-| `linux`     | rocky1, debian1 | Alle managed Linux hosts      |
-| `web_blue`  | rocky1          | nginx variant: poort 8080     |
-| `web_green` | debian1         | nginx variant: poort 8081     |
+- `inventories/lab/hosts.yml` — inventory met host `win2025` in groep `windows`
+- `host_vars/win2025.yml` — transportconfiguratie en verbindingsgegevens voor win2025
+- `playbooks/labo08_windows_baseline.yml` — thin playbook
+- `roles/windows_baseline/` — role met packages, features en config
 
-## Rollen
-- `linux_baseline` – OS update, packages, users, MOTD
-- `nginx` – installatie + vhost config via template
-- `ssh_hardening` – SSH hardening via lineinfile + validatie
+### Transport
 
-## Dependencies installeren
+SSH met key-based authenticatie. De publieke sleutel van de control node staat in
+`C:\ProgramData\ssh\administrators_authorized_keys` op de Windows Server.
+De DefaultShell van de Windows OpenSSH-server is ingesteld op `cmd.exe`,
+wat overeenkomt met `ansible_shell_type: cmd` in de inventory.
+
+### Vault
+
+Voor dit labo is geen Vault nodig: SSH key-based authenticatie vereist geen wachtwoord.
+Er staan geen plaintext secrets in de repo.
+
+### Dependencies installeren
 ```bash
 ansible-galaxy collection install -r requirements.yml
 ```
 
-## Vault setup
+### Playbook uitvoeren
 ```bash
-echo "JouwVaultWachtwoord" > .vault_pass
-# .vault_pass staat in .gitignore en wordt NOOIT gecommit
+ansible-playbook playbooks/labo08_windows_baseline.yml --ask-vault-pass
 ```
 
-## Playbook uitvoeren
+(geen vault in dit labo, dus ook zonder `--ask-vault-pass`:)
 ```bash
-# Eerste run (maakt alles aan)
-ansible-playbook playbooks/labo07_roles_vault.yml
-
-# Tweede run (toont idempotentie)
-ansible-playbook playbooks/labo07_roles_vault.yml
-
-# Met expliciete vault password vraag (zonder .vault_pass file)
-ansible-playbook playbooks/labo07_roles_vault.yml --ask-vault-pass
+ansible-playbook playbooks/labo08_windows_baseline.yml
 ```
 
-## Variabelen aanpassen
-- nginx varianten: `group_vars/web_blue/vars.yml` en `group_vars/web_green/vars.yml`
-- ops_admin SSH key: `group_vars/linux/vars.yml` → `ops_admin_ssh_public_key`
-- emergency_admin hash: `group_vars/linux/vars.yml` → `emergency_admin_password_hash` (vault)
-- become passwords: `host_vars/rocky1/vars.yml` en `host_vars/debian1/vars.yml` (vault)
+### Verwacht gedrag
 
-## Verwacht gedrag
-- **Run 1**: wijzigingen op beide hosts (packages, users, nginx config, SSH hardening)
-- **Run 2**: geen of minimale changes (enkel als OS updates beschikbaar zijn)
-- **Gerichte wijziging**: verander `nginx_listen_port` in web_blue/vars.yml → enkel nginx handler op rocky1 triggert
+**Run 1:** Chocolatey wordt gebootstrapped, 7 packages worden geïnstalleerd, 2 features en 1 config-waarde worden ingesteld. Alle tasks tonen `changed`.
+
+**Run 2:** Niets is gewijzigd. Alle tasks tonen `ok`, geen `changed`.
+
+### Packages/features/config aanpassen
+
+- Packages: `roles/windows_baseline/defaults/main.yml` → `choco_packages`
+- Features: `roles/windows_baseline/defaults/main.yml` → `choco_features`
+- Config: `roles/windows_baseline/defaults/main.yml` → `choco_config`
+- Hostspecifieke overrides: `host_vars/win2025.yml`

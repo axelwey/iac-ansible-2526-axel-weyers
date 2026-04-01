@@ -2,3 +2,4 @@ secrets/*
 vars/debian_become.yml
 .vault_pass
 *.retry
+vault_pass.txt
