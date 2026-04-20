@@ -1,0 +1,95 @@
+---
+- name: "REST Countries | Belgium data ophalen"
+  ansible.builtin.uri:
+    url: "{{ api_healthcheck.restcountries_url }}"
+    method: GET
+    return_content: true
+    timeout: 60
+  register: restcountries_response
+  changed_when: false
+  become: false
+
+- name: "Open Library | Work data ophalen"
+  ansible.builtin.uri:
+    url: "{{ api_healthcheck.openlibrary_url }}"
+    method: GET
+    return_content: true
+    timeout: 60
+    headers:
+      User-Agent: "{{ api_healthcheck.openlibrary_user_agent }}"
+  register: openlibrary_response
+  changed_when: false
+  become: false
+
+- name: "Report | Stabiel health report opbouwen"
+  ansible.builtin.set_fact:
+    health_report:
+      country_name: "{{ restcountries_response.json[0].name.common }}"
+      country_region: "{{ restcountries_response.json[0].region }}"
+      openlibrary_work_key: "{{ openlibrary_response.json.key }}"
+      openlibrary_title: "{{ openlibrary_response.json.title }}"
+  become: false
+
+- name: "Report | Desired content als JSON string opslaan"
+  ansible.builtin.set_fact:
+    desired_content: "{{ health_report | to_nice_json }}"
+  become: false
+- name: "Artifact | Map aanmaken"
+  ansible.builtin.file:
+    path: "{{ api_healthcheck.report_path | dirname }}"
+    state: directory
+    mode: '0755'
+  changed_when: false
+  become: false
+
+- name: "Artifact | Health report lokaal wegschrijven"
+  ansible.builtin.copy:
+    content: "{{ desired_content }}"
+    dest: "{{ api_healthcheck.report_path }}"
+    mode: '0644'
+  become: false
+
+- name: "Gist | Huidige inhoud ophalen"
+  ansible.builtin.uri:
+    url: "https://api.github.com/gists/{{ api_healthcheck.github.gist_id }}"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ vault_github_token }}"
+      Accept: "application/vnd.github+json"
+    status_code: 200
+  register: current_gist
+  changed_when: false
+  no_log: true
+  become: false
+
+- name: "Gist | Huidige bestandsinhoud extraheren"
+  ansible.builtin.set_fact:
+    current_content: >-
+      {{
+        current_gist.json.files[api_healthcheck.github.filename].content
+        if api_healthcheck.github.filename in current_gist.json.files
+        else ''
+      }}
+  become: false
+
+- name: "Gist | Update body opbouwen"
+  ansible.builtin.set_fact:
+    gist_update_body:
+      description: "{{ api_healthcheck.github.description }}"
+      files: "{{ { api_healthcheck.github.filename: {'content': desired_content} } }}"
+  become: false
+
+- name: "Gist | Updaten als inhoud afwijkt van desired state"
+  ansible.builtin.uri:
+    url: "https://api.github.com/gists/{{ api_healthcheck.github.gist_id }}"
+    method: PATCH
+    headers:
+      Authorization: "Bearer {{ vault_github_token }}"
+      Accept: "application/vnd.github+json"
+    body_format: json
+    body: "{{ gist_update_body }}"
+    status_code: 200
+  when: current_content != desired_content
+  changed_when: true
+  no_log: true
+  become: false

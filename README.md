@@ -1,50 +1,49 @@
 # iac-ansible-2526-axel-weyers
 
-## Labo 08 — Windows baseline met Ansible, SSH en Chocolatey
+Ansible-projectrepo voor Infrastructure as Code — AP Hogeschool Antwerpen 2025-2026.
 
-### Projectstructuur
+## Labo 09 — API Healthcheck Workflow
 
-- `inventories/lab/hosts.yml` — inventory met host `win2025` in groep `windows`
-- `host_vars/win2025.yml` — transportconfiguratie en verbindingsgegevens voor win2025
-- `playbooks/labo08_windows_baseline.yml` — thin playbook
-- `roles/windows_baseline/` — role met packages, features en config
+### Projectuitleg
+Een idempotente Ansible-role die twee publieke APIs uitleest, een stabiel JSON
+health report opbouwt, dit lokaal opslaat als artifact, en conditioneel een
+GitHub Gist bijwerkt.
 
-### Transport
-
-SSH met key-based authenticatie. De publieke sleutel van de control node staat in
-`C:\ProgramData\ssh\administrators_authorized_keys` op de Windows Server.
-De DefaultShell van de Windows OpenSSH-server is ingesteld op `cmd.exe`,
-wat overeenkomt met `ansible_shell_type: cmd` in de inventory.
-
-### Vault
-
-Voor dit labo is geen Vault nodig: SSH key-based authenticatie vereist geen wachtwoord.
-Er staan geen plaintext secrets in de repo.
+### Gebruikte inventory group
+`api_targets` — bevat `localhost` met `ansible_connection: local`
 
 ### Dependencies installeren
 ```bash
 ansible-galaxy collection install -r requirements.yml
 ```
 
-### Playbook uitvoeren
+### Vault
+De GitHub token is opgeslagen in een Vault-versleuteld bestand:
+`inventories/lab/group_vars/api_targets/vault.yml`
+
+Het vault-wachtwoord staat in `.vault_pass` (niet in Git).
+
+Vault-bestand bekijken/bewerken:
 ```bash
-ansible-playbook playbooks/labo08_windows_baseline.yml --ask-vault-pass
+ansible-vault view inventories/lab/group_vars/api_targets/vault.yml
+ansible-vault edit inventories/lab/group_vars/api_targets/vault.yml
 ```
 
-(geen vault in dit labo, dus ook zonder `--ask-vault-pass`:)
+### Playbook runnen
 ```bash
-ansible-playbook playbooks/labo08_windows_baseline.yml
+ansible-playbook playbooks/labo09_api_healthcheck.yml
 ```
 
 ### Verwacht gedrag
+**Run 1:** De role leest beide APIs uit, bouwt het rapport, schrijft het lokaal
+weg, en updatet de Gist (changed).
 
-**Run 1:** Chocolatey wordt gebootstrapped, 7 packages worden geïnstalleerd, 2 features en 1 config-waarde worden ingesteld. Alle tasks tonen `changed`.
+**Run 2 (zonder wijzigingen):** Alle taken zijn `ok`, de Gist-update wordt
+overgeslagen omdat de inhoud identiek is (geen changed op de PATCH-taak).
 
-**Run 2:** Niets is gewijzigd. Alle tasks tonen `ok`, geen `changed`.
+**Na een gerichte wijziging** (bv. andere `openlibrary_url`): alleen de
+relevante taak toont `changed`.
 
-### Packages/features/config aanpassen
-
-- Packages: `roles/windows_baseline/defaults/main.yml` → `choco_packages`
-- Features: `roles/windows_baseline/defaults/main.yml` → `choco_features`
-- Config: `roles/windows_baseline/defaults/main.yml` → `choco_config`
-- Hostspecifieke overrides: `host_vars/win2025.yml`
+### Variabelen aanpassen
+Alle configuratie staat in:
+`inventories/lab/group_vars/api_targets/vars.yml`
