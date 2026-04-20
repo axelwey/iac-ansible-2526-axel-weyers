@@ -47,3 +47,20 @@ relevante taak toont `changed`.
 ### Variabelen aanpassen
 Alle configuratie staat in:
 `inventories/lab/group_vars/api_targets/vars.yml`
+
+## Persoonsgebonden configuratie
+
+De Gist ID in `inventories/lab/group_vars/api_targets/vars.yml` is persoonsgebonden.
+Pas `github.gist_id` aan naar de ID van jouw eigen GitHub Gist.
+
+De bijhorende GitHub Personal Access Token (met `gist` scope) sla je op via:
+
+```bash
+ansible-vault edit inventories/lab/group_vars/api_targets/vault.yml
+```
+
+Zet daar:
+
+```yaml
+vault_github_token: "jouw_token"
+```
