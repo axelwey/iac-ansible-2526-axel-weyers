@@ -1,6 +1,6 @@
 ---
 api_healthcheck:
-  restcountries_url: "https://restcountries.com/v3.1/name/france"
+  restcountries_url: "https://restcountries.com/v3.1/name/belgium"
   openlibrary_url: "https://openlibrary.org/works/OL15626917W.json"
   openlibrary_user_agent: "labo09-ansible-healthcheck/1.0"
   report_path: "{{ playbook_dir }}/../artifacts/api_healthcheck/report.json"
