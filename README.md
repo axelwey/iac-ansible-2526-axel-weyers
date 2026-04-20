@@ -2,7 +2,7 @@
 
 Ansible-projectrepo voor Infrastructure as Code — AP Hogeschool Antwerpen 2025-2026.
 
-## Labo 09 — API Healthcheck Workflow
+## Labo 09 API Healthcheck Workflow
 
 ### Projectuitleg
 Een idempotente Ansible-role die twee publieke APIs uitleest, een stabiel JSON
@@ -10,7 +10,7 @@ health report opbouwt, dit lokaal opslaat als artifact, en conditioneel een
 GitHub Gist bijwerkt.
 
 ### Gebruikte inventory group
-`api_targets` — bevat `localhost` met `ansible_connection: local`
+`api_targets`  bevat `localhost` met `ansible_connection: local`
 
 ### Dependencies installeren
 ```bash
