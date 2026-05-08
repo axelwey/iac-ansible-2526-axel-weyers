@@ -1,6 +1,4 @@
 ---
 collections:
-  - name: ansible.posix
-  - name: community.general
-  - name: ansible.windows
-  - name: chocolatey.chocolatey
+  - name: community.proxmox
+  - name: ansible.utils

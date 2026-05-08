@@ -1,0 +1,21 @@
+---
+- name: Common baseline op alle Rocky managed hosts
+  hosts: "managed_by_ansible:&rocky_hosts"
+  gather_facts: true
+
+  roles:
+    - rocky_common
+
+- name: Web configuratie op web hosts
+  hosts: "managed_by_ansible:&web_hosts"
+  gather_facts: false
+
+  roles:
+    - rocky_web
+
+- name: Database configuratie op db hosts
+  hosts: "managed_by_ansible:&db_hosts"
+  gather_facts: false
+
+  roles:
+    - rocky_db

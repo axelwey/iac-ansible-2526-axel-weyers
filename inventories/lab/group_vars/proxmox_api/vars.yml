@@ -1,0 +1,32 @@
+---
+proxmox_host: "172.16.120.20"
+proxmox_node: "pve"
+proxmox_api_user: "ansible@pve"
+proxmox_api_token_id: "ansible-token"
+proxmox_api_token_secret: "{{ vault_proxmox_token_secret }}"
+proxmox_storage: "local-lvm"
+proxmox_template_vmid: 9000
+
+cloud_init_user: "administrator"
+cloud_init_ssh_public_key: "{{ lookup('file', '~/.ssh/id_ed25519_iac_proxmox.pub') }}"
+cloud_init_nameservers: "8.8.8.8 8.8.4.4"
+
+vm_definitions:
+  - name: "rocky-web-01"
+    vmid: 201
+    ip: "172.16.120.21/24"
+    gw: "172.16.120.20"
+    tags:
+      - lab
+      - managed-by-ansible
+      - rocky
+      - web
+  - name: "rocky-db-01"
+    vmid: 202
+    ip: "172.16.120.22/24"
+    gw: "172.16.120.20"
+    tags:
+      - lab
+      - managed-by-ansible
+      - rocky
+      - db

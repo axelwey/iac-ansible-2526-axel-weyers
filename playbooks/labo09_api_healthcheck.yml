@@ -1,7 +1,0 @@
----
-- name: "Labo 09 | API Healthcheck Workflow"
-  hosts: api_targets
-  become: false
-
-  roles:
-    - api_healthcheck

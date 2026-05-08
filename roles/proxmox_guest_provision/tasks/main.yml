@@ -1,0 +1,53 @@
+---
+- name: Clone Rocky template naar nieuwe VM
+  community.proxmox.proxmox_kvm:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    node: "{{ proxmox_node }}"
+    vmid: "{{ proxmox_template_vmid }}"
+    clone: "{{ item.name }}"
+    newid: "{{ item.vmid }}"
+    name: "{{ item.name }}"
+    full: true
+    cpu: host
+    state: present
+  loop: "{{ vm_definitions }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Cloud-init configureren
+  community.proxmox.proxmox_kvm:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    node: "{{ proxmox_node }}"
+    vmid: "{{ item.vmid }}"
+    ciuser: "{{ cloud_init_user }}"
+    cipassword: "{{ vault_lab_administrator_password }}"
+    sshkeys: "{{ cloud_init_ssh_public_key }}"
+    ipconfig:
+      ipconfig0: "ip={{ item.ip }},gw={{ item.gw }}"
+    nameservers: "{{ cloud_init_nameservers }}"
+    tags: "{{ item.tags }}"
+    ciupgrade: false
+    update: true
+    state: present
+  loop: "{{ vm_definitions }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: VM starten
+  community.proxmox.proxmox_kvm:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    node: "{{ proxmox_node }}"
+    vmid: "{{ item.vmid }}"
+    state: started
+  loop: "{{ vm_definitions }}"
+  loop_control:
+    label: "{{ item.name }}"

@@ -1,0 +1,25 @@
+---
+plugin: community.proxmox.proxmox
+url: "https://172.16.120.20:8006"
+user: "ansible@pve"
+token_id: "ansible-token"
+token_secret: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          39356536376533393134356163313534366562306636663031326362353937626339623965663935
+          3333333665343566646466393362306632313962623234660a633437373237633935323665623934
+          34336163666362616465373033366665626535646535656232653138643436313930356663636634
+          6638393833663066630a376336303239323466376463323637353730393737613762626237643737
+          32373664626664616539363461346566353638373730353735356161323237633138346363366163
+          3763306665633330323735343236663862373361333631396630
+
+validate_certs: false
+want_facts: true
+
+groups:
+  managed_by_ansible: "'managed-by-ansible' in (proxmox_tags_parsed | default([]))"
+  rocky_hosts: "'rocky' in (proxmox_tags_parsed | default([]))"
+  web_hosts: "'web' in (proxmox_tags_parsed | default([]))"
+  db_hosts: "'db' in (proxmox_tags_parsed | default([]))"
+
+compose:
+  ansible_host: proxmox_ipconfig0.ip | regex_replace('/.*', '')

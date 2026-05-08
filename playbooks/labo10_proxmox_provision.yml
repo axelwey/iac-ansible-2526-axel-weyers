@@ -1,0 +1,11 @@
+---
+- name: Provision Rocky guests op Proxmox
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - ../inventories/lab/group_vars/proxmox_api/vault.yml
+    - ../inventories/lab/group_vars/managed_by_ansible/vault.yml
+
+  roles:
+    - proxmox_guest_provision

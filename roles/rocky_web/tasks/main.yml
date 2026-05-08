@@ -1,0 +1,11 @@
+---
+- name: Installeer nginx
+  ansible.builtin.dnf:
+    name: nginx
+    state: present
+
+- name: Zorg dat nginx enabled en gestart is
+  ansible.builtin.service:
+    name: nginx
+    enabled: true
+    state: started

@@ -1,0 +1,10 @@
+---
+ansible_user: administrator
+ansible_ssh_private_key_file: ~/.ssh/id_ed25519_iac_proxmox
+ansible_ssh_common_args: >-
+  -o ProxyCommand="ssh -i ~/.ssh/id_ed25519_iac_proxmox -o StrictHostKeyChecking=no -W %h:%p root@172.16.120.20"
+  -o IdentitiesOnly=yes
+  -o StrictHostKeyChecking=no
+ansible_become: true
+ansible_become_method: sudo
+ansible_become_password: "{{ vault_lab_administrator_password }}"
