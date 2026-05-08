@@ -11,13 +11,12 @@
     newid: "{{ item.vmid }}"
     name: "{{ item.name }}"
     full: true
-    cpu: host
     state: present
   loop: "{{ vm_definitions }}"
   loop_control:
     label: "{{ item.name }}"
 
-- name: Cloud-init configureren
+- name: Cloud-init en CPU configureren
   community.proxmox.proxmox_kvm:
     api_host: "{{ proxmox_host }}"
     api_user: "{{ proxmox_api_user }}"
@@ -25,6 +24,7 @@
     api_token_secret: "{{ proxmox_api_token_secret }}"
     node: "{{ proxmox_node }}"
     vmid: "{{ item.vmid }}"
+    cpu: host
     ciuser: "{{ cloud_init_user }}"
     cipassword: "{{ vault_lab_administrator_password }}"
     sshkeys: "{{ cloud_init_ssh_public_key }}"
@@ -51,3 +51,19 @@
   loop: "{{ vm_definitions }}"
   loop_control:
     label: "{{ item.name }}"
+
+- name: NAT masquerade instellen voor guest internet toegang
+  ansible.builtin.iptables:
+    table: nat
+    chain: POSTROUTING
+    source: "{{ item.ip | ansible.utils.ipaddr('address') }}"
+    jump: MASQUERADE
+  loop: "{{ vm_definitions }}"
+  loop_control:
+    label: "{{ item.name }}"
+  delegate_to: 172.16.120.20
+  vars:
+    ansible_user: root
+    ansible_ssh_private_key_file: ~/.ssh/id_ed25519_iac_proxmox
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+  become: true

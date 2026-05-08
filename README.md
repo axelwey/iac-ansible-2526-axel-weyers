@@ -1,66 +1,85 @@
-# iac-ansible-2526-axel-weyers
+# Labo 10 – Proxmox als private IaaS met dynamic inventory en day-2 operations
 
-Ansible-projectrepo voor Infrastructure as Code — AP Hogeschool Antwerpen 2025-2026.
+## Projectuitleg
+Dit project provisioneert twee Rocky Linux VMs op Proxmox VE via de Proxmox API,
+ontdekt ze dynamisch via de community.proxmox inventory plugin en voert
+role-based day-2 configuratie uit op basis van tags en groepen.
 
-## Labo 09 API Healthcheck Workflow
+## Inventory architectuur
+- `inventories/lab/hosts.yml` – statisch, alleen localhost voor provisioning
+- `inventories/lab/pve.proxmox.yml` – dynamic inventory via Proxmox plugin
+- Groepen worden afgeleid uit Proxmox VM tags:
+  - `managed_by_ansible` – alle door Ansible beheerde hosts
+  - `rocky_hosts` – alle Rocky Linux hosts
+  - `web_hosts` – rocky-web-01 (nginx)
+  - `db_hosts` – rocky-db-01 (mariadb)
 
-### Projectuitleg
-Een idempotente Ansible-role die twee publieke APIs uitleest, een stabiel JSON
-health report opbouwt, dit lokaal opslaat als artifact, en conditioneel een
-GitHub Gist bijwerkt.
+## Vereisten
+- Ubuntu 24.04 control node
+- Proxmox VE 9.x bereikbaar op `172.16.120.20:8006`
+- Rocky GenericCloud template aanwezig als VMID 9000
+- API user `ansible@pve` met token `ansible-token` aangemaakt in Proxmox
+- Rollen toegewezen in Proxmox:
+  - `AnsibleRole` op `/` voor `ansible@pve`
+  - `PVESDNUser` op `/sdn/zones/localnetwork` voor `ansible@pve`
+- SSH key aanwezig op control node: `~/.ssh/id_ed25519_iac_proxmox`
+- SSH key geautoriseerd op Proxmox root: `ssh-copy-id -i ~/.ssh/id_ed25519_iac_proxmox root@172.16.120.20`
 
-### Gebruikte inventory group
-`api_targets`  bevat `localhost` met `ansible_connection: local`
-
-### Dependencies installeren
+## Dependencies installeren
 ```bash
 ansible-galaxy collection install -r requirements.yml
+pip3 install --user --break-system-packages proxmoxer
+sudo apt install -y python3-requests python3-netaddr
 ```
 
-### Vault
-De GitHub token is opgeslagen in een Vault-versleuteld bestand:
-`inventories/lab/group_vars/api_targets/vault.yml`
+## Vault
+Gevoelige waarden staan in versleutelde vault bestanden:
+- `inventories/lab/group_vars/proxmox_api/vault.yml` – Proxmox API token secret
+- `inventories/lab/group_vars/managed_by_ansible/vault.yml` – administrator wachtwoord
 
-Het vault-wachtwoord staat in `.vault_pass` (niet in Git).
-
-Vault-bestand bekijken/bewerken:
+Vault password file aanmaken:
 ```bash
-ansible-vault view inventories/lab/group_vars/api_targets/vault.yml
-ansible-vault edit inventories/lab/group_vars/api_targets/vault.yml
+echo 'jouw-vault-wachtwoord' > ~/.vault_pass
+chmod 600 ~/.vault_pass
 ```
 
-### Playbook runnen
+Vault bestanden aanmaken:
 ```bash
-ansible-playbook playbooks/labo09_api_healthcheck.yml
+ansible-vault create inventories/lab/group_vars/proxmox_api/vault.yml
+# Inhoud: vault_proxmox_token_secret: "jouw-token-secret-uuid"
+
+ansible-vault create inventories/lab/group_vars/managed_by_ansible/vault.yml
+# Inhoud: vault_lab_administrator_password: "jouw-wachtwoord"
 ```
 
-### Verwacht gedrag
-**Run 1:** De role leest beide APIs uit, bouwt het rapport, schrijft het lokaal
-weg, en updatet de Gist (changed).
-
-**Run 2 (zonder wijzigingen):** Alle taken zijn `ok`, de Gist-update wordt
-overgeslagen omdat de inhoud identiek is (geen changed op de PATCH-taak).
-
-**Na een gerichte wijziging** (bv. andere `openlibrary_url`): alleen de
-relevante taak toont `changed`.
-
-### Variabelen aanpassen
-Alle configuratie staat in:
-`inventories/lab/group_vars/api_targets/vars.yml`
-
-## Persoonsgebonden configuratie
-
-De Gist ID in `inventories/lab/group_vars/api_targets/vars.yml` is persoonsgebonden.
-Pas `github.gist_id` aan naar de ID van jouw eigen GitHub Gist.
-
-De bijhorende GitHub Personal Access Token (met `gist` scope) sla je op via:
-
+Token secret in pve.proxmox.yml versleutelen:
 ```bash
-ansible-vault edit inventories/lab/group_vars/api_targets/vault.yml
+ansible-vault encrypt_string 'jouw-token-secret-uuid' --name 'token_secret'
+# Plak output in inventories/lab/pve.proxmox.yml
 ```
 
-Zet daar:
-
-```yaml
-vault_github_token: "jouw_token"
+## Provisioning
+```bash
+ansible-playbook playbooks/labo10_proxmox_provision.yml
 ```
+
+## Inventory controleren
+```bash
+ansible-inventory --graph
+ansible-inventory --host rocky-web-01
+```
+
+## Connectiviteit testen
+```bash
+ansible web_hosts -m ansible.builtin.ping
+ansible db_hosts -m ansible.builtin.ping
+```
+
+## Day-2
+```bash
+ansible-playbook playbooks/labo10_day2.yml
+```
+
+## Verwachte output
+- Run 1: changed tasks voor installatie van packages en services
+- Run 2: geen changes, alleen ok
