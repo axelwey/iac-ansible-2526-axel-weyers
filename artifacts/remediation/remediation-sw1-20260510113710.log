@@ -1,0 +1,22 @@
+device: sw1
+interface: Ethernet0/1
+expected_description: Managed by Ansible - Labo11
+changed: true
+verified: true
+before: Building configuration...
+
+Current configuration : 71 bytes
+!
+interface Ethernet0/1
+ description MANUAL DRIFT - NOT COMPLIANT
+end
+
+after: Building configuration...
+
+Current configuration : 70 bytes
+!
+interface Ethernet0/1
+ description Managed by Ansible - Labo11
+end
+
+timestamp: 2026-05-10T11:25:03Z

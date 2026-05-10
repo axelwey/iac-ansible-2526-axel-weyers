@@ -1,0 +1,59 @@
+---
+- name: Labo11 - Network baseline
+  hosts: sw1
+  gather_facts: false
+
+  tasks:
+    - name: Maak lokale backup-directory aan
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/../artifacts/network_backups/{{ inventory_hostname }}"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+
+    - name: Haal running-config read-only op
+      cisco.ios.ios_command:
+        commands:
+          - show running-config
+      register: running_config
+      changed_when: false
+
+    - name: Sla running-config op als backup-artifact
+      ansible.builtin.copy:
+        content: "{{ running_config.stdout[0] }}"
+        dest: "{{ playbook_dir }}/../artifacts/network_backups/{{ inventory_hostname }}/running-config-before-baseline.txt"
+        mode: '0644'
+      delegate_to: localhost
+
+    - name: Lees huidige interfaceconfig
+      cisco.ios.ios_command:
+        commands:
+          - show running-config interface Ethernet0/1
+      register: current_config
+      changed_when: false
+
+    - name: Pas gewenste interface description toe
+      cisco.ios.ios_config:
+        lines:
+          - description Managed by Ansible - Labo11
+        parents: interface Ethernet0/1
+        save_when: modified
+      when: "'Managed by Ansible - Labo11' not in current_config.stdout[0]"
+
+    - name: Lees interfaceconfig na wijziging
+      cisco.ios.ios_command:
+        commands:
+          - show running-config interface Ethernet0/1
+      register: interface_config
+      changed_when: false
+
+    - name: Toon interfaceconfig
+      ansible.builtin.debug:
+        var: interface_config.stdout_lines
+
+    - name: Verify - controleer gewenste description
+      ansible.builtin.assert:
+        that:
+          - "'Managed by Ansible - Labo11' in interface_config.stdout[0]"
+        fail_msg: "VERIFY FAILED: description is niet correct op Ethernet0/1"
+        success_msg: "VERIFY OK: description is correct op Ethernet0/1"

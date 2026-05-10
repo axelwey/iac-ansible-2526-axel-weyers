@@ -1,0 +1,9 @@
+---
+ansible_connection: ansible.netcommon.network_cli
+ansible_network_os: cisco.ios.ios
+ansible_user: ansible
+ansible_ssh_private_key_file: ~/.ssh/labo11_cisco
+ansible_network_cli_ssh_type: paramiko
+ansible_become: true
+ansible_become_method: enable
+remediation_log_dir: "{{ inventory_dir }}/../../artifacts/remediation"

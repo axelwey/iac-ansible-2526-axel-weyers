@@ -1,0 +1,16 @@
+---
+- name: Labo11 - Read-only test
+  hosts: sw1
+  gather_facts: false
+
+  tasks:
+    - name: Lees interface-overzicht via show ip interface brief
+      cisco.ios.ios_command:
+        commands:
+          - show ip interface brief
+      register: interface_brief
+      changed_when: false
+
+    - name: Toon output
+      ansible.builtin.debug:
+        var: interface_brief.stdout_lines

@@ -1,0 +1,26 @@
+---
+- name: Labo11 - Verify network state
+  hosts: sw1
+  gather_facts: false
+
+  tasks:
+    - name: Lees interfaceconfig van Ethernet0/1
+      cisco.ios.ios_command:
+        commands:
+          - show running-config interface Ethernet0/1
+      register: interface_config
+      changed_when: false
+
+    - name: Toon interfaceconfig
+      ansible.builtin.debug:
+        var: interface_config.stdout_lines
+
+    - name: Verify - controleer gewenste description
+      ansible.builtin.assert:
+        that:
+          - "'Managed by Ansible - Labo11' in interface_config.stdout[0]"
+        fail_msg: |
+          VERIFY FAILED - Ethernet0/1 is niet compliant.
+          Expected: Managed by Ansible - Labo11
+          Current: {{ interface_config.stdout[0] }}
+        success_msg: "VERIFY OK: Ethernet0/1 heeft de gewenste description."

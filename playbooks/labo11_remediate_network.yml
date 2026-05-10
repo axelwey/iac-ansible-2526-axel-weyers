@@ -1,0 +1,65 @@
+---
+- name: Labo11 - Remediation network
+  hosts: sw1
+  gather_facts: false
+  vars:
+    ansible_connection: ansible.netcommon.network_cli
+    ansible_network_os: cisco.ios.ios
+    ansible_user: ansible
+    ansible_ssh_private_key_file: ~/.ssh/labo11_cisco
+    ansible_network_cli_ssh_type: paramiko
+    ansible_become: true
+    ansible_become_method: enable
+  vars_files:
+    - "{{ inventory_dir }}/group_vars/cisco_switches/vault.yml"
+
+  tasks:
+    - name: Maak lokale remediation-logdirectory aan
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/../artifacts/remediation"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+
+    - name: Lees interfaceconfig vóór remediation
+      cisco.ios.ios_command:
+        commands:
+          - show running-config interface Ethernet0/1
+      register: config_before
+      changed_when: false
+
+    - name: Zet gewenste description terug
+      cisco.ios.ios_config:
+        lines:
+          - description {{ expected_description }}
+        parents: interface {{ interface }}
+        save_when: modified
+      register: remediation_result
+
+    - name: Lees interfaceconfig na remediation
+      cisco.ios.ios_command:
+        commands:
+          - show running-config interface Ethernet0/1
+      register: config_after
+      changed_when: false
+
+    - name: Verify na remediation
+      ansible.builtin.assert:
+        that:
+          - "expected_description in config_after.stdout[0]"
+        fail_msg: "VERIFY FAILED na remediation: description is niet hersteld"
+        success_msg: "VERIFY OK na remediation: description is hersteld"
+    - name: Schrijf remediation-log
+      ansible.builtin.copy:
+        content: |
+          device: {{ inventory_hostname }}
+          interface: {{ interface }}
+          expected_description: {{ expected_description }}
+          changed: {{ remediation_result.changed }}
+          verified: true
+          before: {{ config_before.stdout[0] }}
+          after: {{ config_after.stdout[0] }}
+          timestamp: {{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}
+        dest: "{{ playbook_dir }}/../artifacts/remediation/remediation-{{ inventory_hostname }}-{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}.log"
+        mode: '0644'
+      delegate_to: localhost

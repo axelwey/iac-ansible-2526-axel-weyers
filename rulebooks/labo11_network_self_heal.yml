@@ -1,0 +1,16 @@
+---
+- name: Labo11 network self-heal
+  hosts: all
+  sources:
+    - ansible.eda.webhook:
+        host: 0.0.0.0
+        port: 5000
+  rules:
+    - name: Herstel interface description drift op sw1
+      condition: event.payload.problem == "interface_description_drift" and event.payload.device == "sw1"
+      action:
+        run_playbook:
+          name: playbooks/labo11_remediate_network.yml
+          extra_vars:
+            interface: "{{ event.payload.interface }}"
+            expected_description: "{{ event.payload.expected_description }}"

@@ -2,3 +2,6 @@
 collections:
   - name: community.proxmox
   - name: ansible.utils
+  - name: cisco.ios
+  - name: ansible.netcommon
+  - name: ansible.eda
